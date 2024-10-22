@@ -23,7 +23,7 @@ const Calendario = ({ onDateChange }) => {
   };
 
   return (
-    <div className="calendar-container">
+    <div className="calendar-container flex justify-center">
       <DatePicker
         selected={selectedDate}
         onChange={handleDateChange} // Usa la nueva función para manejar el cambio de fecha

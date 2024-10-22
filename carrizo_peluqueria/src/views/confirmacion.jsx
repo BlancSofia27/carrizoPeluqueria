@@ -1,11 +1,11 @@
-import logo from '../assets/logoCarrizo.jpg'
+import logo from '../assets/logo1.jpg'
 import emailGif from '../assets/email.gif';
 
 const ReservaConfirmada = () => {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen text-white bg-black px-5">
       <img 
-      className="w-40 h-w-40"
+      className="w-40 h-w-40 rounded-xl m-2"
       src={logo} 
       alt="logo leo leiva peluqueria" />
       <h1 className="text-3xl font-bold mb-4">Reserva Confirmada</h1>

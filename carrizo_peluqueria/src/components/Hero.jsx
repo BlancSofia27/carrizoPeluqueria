@@ -37,7 +37,7 @@ const Hero = () => {
         </h1>
 
         {/* Texto debajo del logo */}
-        <h2 className="my-2 text-xl font-light text-white">Selecciona una fecha</h2>
+        <h2 className="my-2 text-xl font-light text-white">Reservar Servicio</h2>
       </div>
     </div>
   );

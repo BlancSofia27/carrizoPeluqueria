@@ -6,7 +6,7 @@ import corte from '../assets/corte.jpeg';
 import color from '../assets/color.jpg';
 
 const SelectServicio = ({ onTotalChange, onServiciosChange }) => {
-  const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]);
+  const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]); // Guardar solo los nombres de los servicios seleccionados
   const [total, setTotal] = useState(0);
 
   const servicios = [
@@ -39,16 +39,19 @@ const SelectServicio = ({ onTotalChange, onServiciosChange }) => {
     let nuevoTotal = total;
 
     if (checked) {
-      nuevosServicios = [...serviciosSeleccionados, servicio];
+      // Añadir solo el nombre del servicio al array de seleccionados
+      nuevosServicios = [...serviciosSeleccionados, servicio.nombre];
       nuevoTotal += servicio.valor;
     } else {
-      nuevosServicios = serviciosSeleccionados.filter(s => s.nombre !== servicio.nombre);
+      // Eliminar el nombre del servicio del array de seleccionados
+      nuevosServicios = serviciosSeleccionados.filter(nombre => nombre !== servicio.nombre);
       nuevoTotal -= servicio.valor;
     }
 
     setServiciosSeleccionados(nuevosServicios);
     setTotal(nuevoTotal);
 
+    // Enviar el total actualizado y los servicios seleccionados al componente padre
     onTotalChange(nuevoTotal);
     onServiciosChange(nuevosServicios);
   };
@@ -98,14 +101,12 @@ const SelectServicio = ({ onTotalChange, onServiciosChange }) => {
           <thead>
             <tr>
               <th className="text-left p-3">Servicio</th>
-              <th className="text-left p-3">Precio</th>
             </tr>
           </thead>
           <tbody>
-            {serviciosSeleccionados.map((servicio, index) => (
+            {serviciosSeleccionados.map((nombre, index) => (
               <tr key={index}>
-                <td className="border-b p-3">{servicio.nombre}</td>
-                <td className="border-b p-3">{servicio.precio}</td>
+                <td className="border-b p-3">{nombre}</td>
               </tr>
             ))}
           </tbody>

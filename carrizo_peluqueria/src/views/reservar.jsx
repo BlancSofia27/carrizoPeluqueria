@@ -1,128 +1,175 @@
-import { useState, useEffect } from 'react';
-import AOS from 'aos';
-import 'aos/dist/aos.css';
-import barba from '../assets/barba.jpeg';
-import corte from '../assets/corte.jpeg';
-import color from '../assets/color.jpg';
+import React, { useState } from "react"
+import SelectServicio from "../components/selectServicio"
+import SelectHorario from "../components/selectHorario"
+import Calendario from "../components/calendar"
+import Hero from "../components/Hero"
+import { sendReservationEmail } from "../components/sendReservationEmail"
+import Footer from "../components/footer"
+import Swal from "sweetalert2"
 
-const SelectServicio = ({ onTotalChange, onServiciosChange }) => {
-  const [serviciosSeleccionados, setServiciosSeleccionados] = useState([]); // Array de nombres de servicios seleccionados
-  const [total, setTotal] = useState(0);
+// Función para formatear la fecha
+const formatearFecha = (fechaISO) => {
+  const fecha = new Date(fechaISO)
+  const opciones = {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }
+  return fecha.toLocaleDateString("es-ES", opciones)
+}
 
-  const servicios = [
-    { 
-      nombre: 'Corte', 
-      img: corte,  
-      precio: '$12.000', 
-      valor: 20000 
-    },
-    { 
-      nombre: 'Barba', 
-      img: barba,  
-      precio: '$15.000', 
-      valor: 15000 
-    },
-    { 
-      nombre: 'Coloración', 
-      img: color,  
-      precio: '$30.000', 
-      valor: 30000 
+const Reservar = () => {
+  const [fecha, setFecha] = useState(null)
+  const [subServicio, setSubServicio] = useState([])
+  const [horario, setHorario] = useState(null)
+  const [nombre, setNombre] = useState("")
+  const [email, setEmail] = useState("")
+  const [emailConfirm, setEmailConfirm] = useState("")
+  const [total, setTotal] = useState(0)
+
+  const handleReserva = async () => {
+    if (
+      !nombre ||
+      !email ||
+      !emailConfirm ||
+      !fecha ||
+      !horario ||
+      subServicio.length === 0
+    ) {
+      Swal.fire({
+        position: "center",
+        icon: "warning",
+        title: "Completa todos los campos para realizar la reserva",
+        showConfirmButton: false,
+        timer: 1500,
+      })
+      return
     }
-  ];
 
-  useEffect(() => {
-    AOS.init({ duration: 800 });
-  }, []);
-
-  const handleServicioClick = (servicio, checked) => {
-    let nuevosServicios = [];
-    let nuevoTotal = total;
-
-    if (checked) {
-      // Añadir solo el nombre del servicio al array de seleccionados
-      nuevosServicios = [...serviciosSeleccionados, servicio.nombre];
-      nuevoTotal += servicio.valor;
-    } else {
-      // Eliminar solo el nombre del servicio del array de seleccionados
-      nuevosServicios = serviciosSeleccionados.filter(s => s !== servicio.nombre);
-      nuevoTotal -= servicio.valor;
+    // Validar que los correos electrónicos coincidan
+    if (email !== emailConfirm) {
+      alert(
+        "Los correos electrónicos no coinciden. Por favor, verifica e intenta nuevamente."
+      )
+      return
     }
 
-    setServiciosSeleccionados(nuevosServicios);
-    setTotal(nuevoTotal);
+    // Formatear la fecha antes de enviar el correo
+    const fechaFormateada = formatearFecha(fecha)
 
-    // Comunicamos los cambios al componente padre
-    onTotalChange(nuevoTotal);
-    onServiciosChange(nuevosServicios); // Enviar solo los nombres
-  };
+    // Formatear subServicios como una cadena de texto con saltos de línea
+    const subServiciosFormateados = subServicio.join(", ")
+    const dataToSend = {
+      nombre,
+      subservicios: subServiciosFormateados,
+      fecha: fechaFormateada,
+      horario,
+      email,
+    }
+    try {
+      const response = await sendReservationEmail(dataToSend)
+      console.log(dataToSend)
+
+      Swal.fire({
+        position: "center",
+        icon: "success",
+        title: "Reserva Realizada",
+        showConfirmButton: false,
+        timer: 1500,
+      })
+      resetForm()
+
+      //Redireccionar después de 3 segundos
+      setTimeout(() => {
+        window.location.href = "/confirmacion"
+      }, 3000)
+    } catch (error) {
+      console.error("Error al enviar la reserva:", error)
+      alert("Hubo un problema al enviar la reserva")
+    }
+  }
+
+  const resetForm = () => {
+    setFecha(null)
+    setSubServicio([])
+    setHorario(null)
+    setNombre("")
+    setEmail("")
+    setEmailConfirm("")
+    setTotal(0)
+  }
 
   return (
-    <div className="mb-4 xl:w-[500px] lg:w-[500px]">
-      <div className="flex flex-wrap gap-4 justify-center">
-        {servicios.map((servicio) => (
-          <div
-            key={servicio.nombre}
-            className="border rounded-lg w-[300px] h-[100px] flex items-center bg-zinc-800 text-white cursor-pointer transition-transform duration-300 transform hover:scale-105"
-            data-aos="fade-up"
-          >
-            <img 
-              src={servicio.img} 
-              alt={servicio.nombre} 
-              className="w-[100px] h-full object-cover rounded-l-lg"
-            />
-            <div className="flex flex-col justify-center pl-4 flex-grow">
-              <h4 className="text-lg font-bold">{servicio.nombre}</h4>
-              <p className="text-gray-300">{servicio.precio}</p>
-            </div>
-            <div className="pr-4">
-              <div className="inline-flex items-center">
-                <label className="flex items-center cursor-pointer relative">
-                  <input
-                    type="checkbox"
-                    className="peer h-5 w-5 cursor-pointer transition-all appearance-none rounded shadow hover:shadow-md border border-slate-300 checked:bg-green-500 checked:border-green-500"
-                    onChange={(e) => handleServicioClick(servicio, e.target.checked)}
-                  />
-                  <span className="absolute text-white opacity-0 peer-checked:opacity-100 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor" stroke="currentColor" strokeWidth="1">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                  </span>
-                </label>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
+    <div className="flex flex-col justify-center items-center min-h-screen bg-cover bg-center bg-opacity-50 w-full">
+      <Hero />
+      <div className="flex flex-col justify-center items-center container mx-3 py-3">
+        <h3 className="text-2xl text-white mb-4 text-center">
+          Selecciona una Fecha
+        </h3>
+        <div className="mb-4">
+          <Calendario onDateChange={setFecha} selectedDate={fecha} />
+        </div>
+        <SelectServicio
+          onTotalChange={setTotal}
+          onServiciosChange={setSubServicio}
+        />
 
-      {/* Tabla de servicios seleccionados */}
-      <div className="mt-6 w-full">
-        <h3 className="text-white text-lg font-semibold mb-4 text-center">Servicios Seleccionados:</h3>
-        <table className="table-auto w-full text-white">
-          <thead>
-            <tr>
-              <th className="text-left p-3">Servicio</th>
-              <th className="text-left p-3">Precio</th>
-            </tr>
-          </thead>
-          <tbody>
-            {serviciosSeleccionados.map((nombre, index) => {
-              const servicio = servicios.find(s => s.nombre === nombre); // Encuentra el objeto servicio por nombre
-              return (
-                <tr key={index}>
-                  <td className="border-b p-3">{servicio.nombre}</td>
-                  <td className="border-b p-3">{servicio.precio}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-        {/* Total */}
-        <div className="mt-4 text-right text-white font-semibold">
-          Total: ${total.toLocaleString()}
+        {/* Solo mostrar SelectHorario si hay un servicio seleccionado */}
+        {subServicio.length > 0 && (
+          <SelectHorario onHorarioChange={setHorario} />
+        )}
+
+        <div className="m-4 w-full md:w-[400px]">
+          {" "}
+          {/* Puedes ajustar el ancho */}
+          <input
+            type="text"
+            placeholder="Tu nombre"
+            value={nombre}
+            onChange={(e) => setNombre(e.target.value)}
+            className="border p-2 mb-2 w-full text-black"
+          />
+          <input
+            type="email"
+            placeholder="Tu email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="border p-2 mb-2 w-full text-black"
+          />
+          <input
+            type="email"
+            placeholder="Confirma tu email"
+            value={emailConfirm}
+            onChange={(e) => setEmailConfirm(e.target.value)}
+            className="border p-2 mb-2 w-full text-black"
+          />
+          {/* Label para mostrar la coincidencia de correos */}
+          <label
+            className={`text-sm mt-1 ${
+              email === emailConfirm ? "text-green-500" : "text-red-500"
+            }`}
+          >
+            {emailConfirm
+              ? email === emailConfirm
+                ? "Los correos coinciden"
+                : "Los correos no coinciden"
+              : ""}
+          </label>
+        </div>
+
+        <div className="flex justify-center">
+          <button
+            onClick={handleReserva}
+            className="bg-blue-500 text-white p-2 rounded"
+          >
+            Confirmar Reserva
+          </button>
         </div>
       </div>
+      <Footer />
     </div>
-  );
-};
+  )
+}
 
-export default SelectServicio;
+export default Reservar
